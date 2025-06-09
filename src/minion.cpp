@@ -6,18 +6,37 @@
 #include <termios.h>
 #include <unistd.h>
 
+#define ERROR_CODE -1
+
+void handleError()
+{
+	std::cerr << "An error occured during execution\n";
+	exit(1);
+}
+
 #pragma region Terminal Mode
 
 struct termios default_term_settings;
 
 void disableTerminalRawMode()
 {
-    tcsetattr(STDIN_FILENO, TCSAFLUSH, &default_term_settings);
+    const int res = tcsetattr(STDIN_FILENO, TCSAFLUSH, &default_term_settings);
+
+	if (res == ERROR_CODE)
+	{
+		handleError();
+	}
 }
 
 void enableTerminalRawMode()
 {
-	tcgetattr(STDIN_FILENO, &default_term_settings);
+	const int res = tcgetattr(STDIN_FILENO, &default_term_settings);
+	
+	if (res == ERROR_CODE)
+	{
+		handleError();
+	}
+
 	atexit(disableTerminalRawMode);
 
 	// Read terminal configurations and stores them apart
@@ -32,11 +51,19 @@ void enableTerminalRawMode()
 	raw.c_lflag &= ~(ECHO | ICANON | ISIG);
 	raw.c_lflag &= ~(IEXTEN | IXON | ICRNL | OPOST);
 
+	// Setup read time-out
+	raw.c_cc[VMIN] = 0;
+	raw.c_cc[VTIME] = 1;
+
 	// Turn off other misc flags
 	raw.c_lflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON | CS8);
 
 	// Overwrite terminal configurations
-	tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
+	const int writeRes = tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
+	if (writeRes == ERROR_CODE)
+	{
+		handleError();
+	}
 }
 
 #pragma endregion
@@ -47,9 +74,16 @@ int main()
 	enableTerminalRawMode();
 
 	// Reads 1 byte and writes it in c until it different from q
-	char c;
-	while (read(STDIN_FILENO, &c, 1) == 1 && c != 'q')
+	while (true)
 	{
+		char c = '\0';
+		const int readRes = read(STDIN_FILENO, &c, 1);
+	
+		if (readRes == ERROR_CODE && errno != EAGAIN)
+		{
+			handleError();
+		}
+
 		// Prints only chars from 32 to 126
 		// Note that all escape sequences start with byte 27
 		if (iscntrl(c))
@@ -59,6 +93,11 @@ int main()
 		else
 		{
 			printf("%d ('%c')\r\n", c, c);	
+		}
+
+		if (c == 'q')
+		{
+			break;
 		}
 	}
 
