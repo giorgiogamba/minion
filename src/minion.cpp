@@ -2,11 +2,23 @@
 
 // Minion, a c++ text editor
 
+#pragma region Includes
+
 #include <iostream>
 #include <termios.h>
 #include <unistd.h>
 
+#pragma endregion
+
+#pragma region Definitions
+
 #define ERROR_CODE -1
+
+//Bitwises-AND character k with 00011111 (sets the 3 leftmost bits to 0)
+// This represents the ctrl behaviour in terminal
+#define CTRL_KEY(k) ((k) & 0x1f)
+
+#pragma endregion
 
 void handleError()
 {
@@ -95,7 +107,7 @@ int main()
 			printf("%d ('%c')\r\n", c, c);	
 		}
 
-		if (c == 'q')
+		if (c == CTRL_KEY('q'))
 		{
 			break;
 		}
