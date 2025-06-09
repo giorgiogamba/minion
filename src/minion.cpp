@@ -24,7 +24,11 @@ int main()
 	// Change terminal configurations
 	enableTerminalRawMode();
 
-	std::cout << "Test\n";
+	// Reads 1 byte and writes it in c until it different from q
+	char c;
+	while (read(STDIN_FILENO, &c, 1) == 1 && c != 'q')
+	{}
+
 	return 0;
 }
 
