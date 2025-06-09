@@ -20,8 +20,20 @@
 
 #pragma endregion
 
+void refreshScreen()
+{
+    // Writes an escape character to the terminal (\x1b) which are always followed by [
+    // J clears the entire (2) screen
+    write(STDOUT_FILENO, "\x1b[2J", 4);
+
+    // Reposition the cursor to the top left corner
+    // H takes as optional arguments the XY coords of the desired cursor position
+    write(STDOUT_FILENO, "\x1b[H", 3);
+}
+
 void handleError()
 {
+	refreshScreen();
 	std::cerr << "An error occured during execution\n";
 	exit(1);
 }
@@ -66,6 +78,9 @@ void processKey()
 	{
 		case CTRL_KEY('y'):
 			std::cout << "Pressed exit combo\n";
+
+			refreshScreen();
+
 			exit(0);
 			break;
 
@@ -73,17 +88,6 @@ void processKey()
 			std::cout << c << "\n";
 			break;
 	}
-}
-
-void refreshScreen()
-{
-	// Writes an escape character to the terminal (\x1b) which are always followed by [
-	// J clears the entire (2) screen
-	write(STDOUT_FILENO, "\x1b[2J", 4);
-
-	// Reposition the cursor to the top left corner
-	// H takes as optional arguments the XY coords of the desired cursor position
-	write(STDOUT_FILENO, "\x1b[H", 3);
 }
 
 void enableTerminalRawMode()
