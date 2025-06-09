@@ -40,10 +40,56 @@ void disableTerminalRawMode()
 	}
 }
 
+char readKey()
+{
+	int numRead = -1;
+	char charRead;
+	
+	while ((numRead = read(STDIN_FILENO, &charRead, 1)) != 1)
+	{
+		// Error detection
+		if (numRead == ERROR_CODE && errno != EAGAIN)
+		{
+			handleError();
+		}
+	}
+
+	return charRead;
+}
+
+// Handles the editor operation depending on the character
+void processKey()
+{
+	const char c = readKey();
+
+	switch(c)
+	{
+		case CTRL_KEY('y'):
+			std::cout << "Pressed exit combo\n";
+			exit(0);
+			break;
+
+		default:
+			std::cout << c << "\n";
+			break;
+	}
+}
+
+void refreshScreen()
+{
+	// Writes an escape character to the terminal (\x1b) which are always followed by [
+	// J clears the entire (2) screen
+	write(STDOUT_FILENO, "\x1b[2J", 4);
+
+	// Reposition the cursor to the top left corner
+	// H takes as optional arguments the XY coords of the desired cursor position
+	write(STDOUT_FILENO, "\x1b[H", 3);
+}
+
 void enableTerminalRawMode()
 {
 	const int res = tcgetattr(STDIN_FILENO, &default_term_settings);
-	
+		
 	if (res == ERROR_CODE)
 	{
 		handleError();
@@ -88,29 +134,8 @@ int main()
 	// Reads 1 byte and writes it in c until it different from q
 	while (true)
 	{
-		char c = '\0';
-		const int readRes = read(STDIN_FILENO, &c, 1);
-	
-		if (readRes == ERROR_CODE && errno != EAGAIN)
-		{
-			handleError();
-		}
-
-		// Prints only chars from 32 to 126
-		// Note that all escape sequences start with byte 27
-		if (iscntrl(c))
-		{
-			printf("%d\r\n", c);
-		}
-		else
-		{
-			printf("%d ('%c')\r\n", c, c);	
-		}
-
-		if (c == CTRL_KEY('q'))
-		{
-			break;
-		}
+		refreshScreen();
+		processKey();
 	}
 
 	return 0;
