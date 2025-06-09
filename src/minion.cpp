@@ -6,18 +6,33 @@
 #include <termios.h>
 #include <unistd.h>
 
+#pragma region Terminal Mode
+
+struct termios default_term_settings;
+
+void disableTerminalRawMode()
+{
+    tcsetattr(STDIN_FILENO, TCSAFLUSH, &default_term_settings);
+}
+
 void enableTerminalRawMode()
 {
-	// Read terminal configurations
-	struct termios raw;
+	tcgetattr(STDIN_FILENO, &default_term_settings);
+	atexit(disableTerminalRawMode);
+
+	// Read terminal configurations and stores them apart
+	struct termios raw = default_term_settings;
 	tcgetattr(STDIN_FILENO, &raw);
 
 	// Turn off echo mode (each key is printed on terminal)
-	raw.c_lflag &= ~(ECHO);
+	// Turn off canonical mode in order to read input byte-by-byte
+	raw.c_lflag &= ~(ECHO | ICANON);
 
 	// Overwrite terminal configurations
 	tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
 }
+
+#pragma endregion
 
 int main()
 {
