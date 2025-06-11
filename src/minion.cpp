@@ -5,6 +5,7 @@
 #pragma region Includes
 
 #include <iostream>
+#include <sys/ioctl.h>
 #include <termios.h>
 #include <unistd.h>
 
@@ -20,6 +21,47 @@
 
 #pragma endregion
 
+#pragma region Types
+
+struct editorConfiguration
+{
+    int screenRows;
+    int screenCols;
+    struct termios default_term_settings;
+};
+struct editorConfiguration E;
+
+#pragma endregion
+
+int getWindowSize(int& rows, int& cols)
+{
+	struct winsize ws;
+
+	if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) == ERROR_CODE || ws.ws_col == 0)
+	{
+		return ERROR_CODE;
+	}
+
+	cols = ws.ws_col;
+	rows = ws.ws_row;
+
+	return 0; // SUCCESS
+}
+
+void drawEditorRows()
+{
+	// #TODO refactor by using a single write operation that prints the complete string
+	for (int y = 0; y < E.screenRows; ++y)
+	{
+		write(STDOUT_FILENO, "~", 1);
+
+		if (y < E.screenRows-1)
+		{
+			write(STDOUT_FILENO, "\r\n", 2);
+		}
+	}
+}
+
 void refreshScreen()
 {
     // Writes an escape character to the terminal (\x1b) which are always followed by [
@@ -29,6 +71,11 @@ void refreshScreen()
     // Reposition the cursor to the top left corner
     // H takes as optional arguments the XY coords of the desired cursor position
     write(STDOUT_FILENO, "\x1b[H", 3);
+
+	drawEditorRows();
+	
+	// Reposition cursor
+	write(STDOUT_FILENO, "\x1b[H", 3);
 }
 
 void handleError()
@@ -40,11 +87,9 @@ void handleError()
 
 #pragma region Terminal Mode
 
-struct termios default_term_settings;
-
 void disableTerminalRawMode()
 {
-    const int res = tcsetattr(STDIN_FILENO, TCSAFLUSH, &default_term_settings);
+    const int res = tcsetattr(STDIN_FILENO, TCSAFLUSH, &E.default_term_settings);
 
 	if (res == ERROR_CODE)
 	{
@@ -92,7 +137,7 @@ void processKey()
 
 void enableTerminalRawMode()
 {
-	const int res = tcgetattr(STDIN_FILENO, &default_term_settings);
+	const int res = tcgetattr(STDIN_FILENO, &E.default_term_settings);
 		
 	if (res == ERROR_CODE)
 	{
@@ -101,8 +146,9 @@ void enableTerminalRawMode()
 
 	atexit(disableTerminalRawMode);
 
+	struct termios raw = E.default_term_settings;
+
 	// Read terminal configurations and stores them apart
-	struct termios raw = default_term_settings;
 	tcgetattr(STDIN_FILENO, &raw);
 
 	// Turn off echo mode (each key is printed on terminal)
@@ -130,10 +176,19 @@ void enableTerminalRawMode()
 
 #pragma endregion
 
+void initEditor()
+{
+	if (getWindowSize(E.screenRows, E.screenCols) == ERROR_CODE)
+	{
+		handleError();
+	}
+}
+
 int main()
 {
 	// Change terminal configurations
 	enableTerminalRawMode();
+	initEditor();
 
 	// Reads 1 byte and writes it in c until it different from q
 	while (true)
