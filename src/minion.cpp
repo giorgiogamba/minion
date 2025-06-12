@@ -113,19 +113,19 @@ void moveEditorCursor(const char input)
 {
 	switch(input)
 	{
-		case 'a':
+		case editorKeys::ARROW_UP:
 			E.cx--;
 			break;
 
-		case 'd':
+		case editorKeys::ARROW_DOWN:
 			E.cx++;
 			break;
 
-		case 'w':
+		case editorKeys::ARROW_LEFT:
             E.cy++;
             break;
 
-        case 's':
+        case editorKeys::ARROW_RIGHT:
             E.cy--;
             break;
 
@@ -180,10 +180,10 @@ void processKey()
 			exit(0);
 			break;
 
-		case 'a':
-		case 's':
-		case 'd':
-		case 'w':
+		case editorKeys::ARROW_UP:
+		case editorKeys::ARROW_DOWN:
+		case editorKeys::ARROW_RIGHT:
+		case editorKeys::ARROW_LEFT:
 			moveEditorCursor(c);
 
 		default:
