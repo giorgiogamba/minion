@@ -53,6 +53,12 @@ void drawEditorRows()
 	// #TODO refactor by using a single write operation that prints the complete string
 	for (int y = 0; y < E.screenRows; ++y)
 	{
+		if (y == E.screenRows / 3)
+		{
+			std::string welcomeMessage{"Welcome to Minion!"};
+			write(STDOUT_FILENO, &welcomeMessage, welcomeMessage.size());
+		}
+
 		write(STDOUT_FILENO, "~", 1);
 
 		if (y < E.screenRows-1)
