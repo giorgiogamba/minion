@@ -98,6 +98,36 @@ void handleError()
 	exit(1);
 }
 
+#pragma region Cursor Movement
+
+// Moves cursor position depending on the passed input
+void moveEditorCursor(const char input)
+{
+	switch(input)
+	{
+		case 'a':
+			E.cx--;
+			break;
+
+		case 'd':
+			E.cx++;
+			break;
+
+		case 'w':
+            E.cy++;
+            break;
+
+        case 's':
+            E.cy--;
+            break;
+
+		default:
+			break;
+	}
+}
+
+#pragma endregion
+
 #pragma region Terminal Mode
 
 void disableTerminalRawMode()
@@ -141,6 +171,12 @@ void processKey()
 
 			exit(0);
 			break;
+
+		case 'a':
+		case 's':
+		case 'd':
+		case 'w':
+			moveEditorCursor(c);
 
 		default:
 			std::cout << c << "\n";
