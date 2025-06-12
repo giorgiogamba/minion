@@ -35,6 +35,14 @@ struct editorConfiguration
 };
 struct editorConfiguration E;
 
+enum editorKeys
+{
+	ARROW_LEFT = 'a',
+	ARROW_RIGHT = 'd',
+	ARROW_UP = 'w',
+	ARROW_DOWN = 's',
+};
+
 #pragma endregion
 
 int getWindowSize(int& rows, int& cols)
