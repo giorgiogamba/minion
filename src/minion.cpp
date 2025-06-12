@@ -162,6 +162,43 @@ char readKey()
 		}
 	}
 
+	// Terminal reads arrows as escape \x1b + A, B, C or D depending on the direction
+	if (charRead == '\x1b') // if read an escape sequence
+	{
+		constexpr char escape{'\x1b'};
+		char charSequence[3];
+		if (read(STDOUT_FILENO, &charSequence[0], 1) != 1)
+		{
+			return escape;
+		}
+
+		if (read(STDOUT_FILENO, &charSequence[1], 1) != 1)
+		{
+			return escape;
+		}
+
+		if (charSequence[0] == '[')
+		{
+			switch(charSequence[1])
+			{
+				case 'A':
+					return editorKeys::ARROW_UP;
+
+				case 'B':
+					return editorKeys::ARROW_DOWN;
+
+				case 'C':
+					return editorKeys::ARROW_RIGHT;
+
+				case 'D':
+					return editorKeys::ARROW_LEFT;
+			}
+		}
+
+		return escape;
+	}
+
+	// Standard character
 	return charRead;
 }
 
