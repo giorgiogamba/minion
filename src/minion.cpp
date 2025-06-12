@@ -25,6 +25,10 @@
 
 struct editorConfiguration
 {
+	// Cursor coordinates
+	int cx;
+	int cy;
+
     int screenRows;
     int screenCols;
     struct termios default_term_settings;
@@ -79,6 +83,9 @@ void refreshScreen()
     write(STDOUT_FILENO, "\x1b[H", 3);
 
 	drawEditorRows();
+
+	std::string cursorTerminalPos = "\x1b[" + std::to_string(E.cy+1) + ";" + std::to_string(E.cx + 1) + "H";
+	write(STDOUT_FILENO, &cursorTerminalPos, cursorTerminalPos.size()); 
 	
 	// Reposition cursor
 	write(STDOUT_FILENO, "\x1b[H", 3);
@@ -184,6 +191,10 @@ void enableTerminalRawMode()
 
 void initEditor()
 {
+	// Cursor is set to the screen's top left
+	E.cx = 0;
+	E.cy = 0;
+
 	if (getWindowSize(E.screenRows, E.screenCols) == ERROR_CODE)
 	{
 		handleError();
