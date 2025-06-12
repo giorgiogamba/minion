@@ -114,19 +114,19 @@ void moveEditorCursor(const char input)
 	switch(input)
 	{
 		case editorKeys::ARROW_UP:
-			E.cx--;
+			E.cx = std::max(0, E.cx-1);
 			break;
 
 		case editorKeys::ARROW_DOWN:
-			E.cx++;
+			E.cx = std::min(E.cx+1, E.screenCols-1);
 			break;
 
 		case editorKeys::ARROW_LEFT:
-            E.cy++;
+			E.cy = std::min(E.cy+1, E.screenRows-1);
             break;
 
         case editorKeys::ARROW_RIGHT:
-            E.cy--;
+			E.cy = std::max(0, E.cy-1);
             break;
 
 		default:
