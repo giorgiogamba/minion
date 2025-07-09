@@ -98,8 +98,10 @@ void refreshScreen(const bool bDrawRows)
 		drawEditorRows();
 	}
 
-	std::string cursorTerminalPos = "\x1b[" + std::to_string(E.cy+1) + ";" + std::to_string(E.cx + 1) + "H";
+	const std::string cursorTerminalPos = "\x1b[" + std::to_string(E.cy + 1) + ";" + std::to_string(E.cx + 1) + "H";
 	write(STDOUT_FILENO, &cursorTerminalPos, cursorTerminalPos.size()); 
+
+	write(STDOUT_FILENO, "\x1b[?25h", 6);
 	
 	// Reposition cursor
 	write(STDOUT_FILENO, "\x1b[H", 3);
