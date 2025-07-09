@@ -80,7 +80,7 @@ void drawEditorRows()
 	}
 }
 
-void refreshScreen()
+void refreshScreen(const bool bDrawRows)
 {
     // Writes an escape character to the terminal (\x1b) which are always followed by [
     // J clears the entire (2) screen
@@ -90,7 +90,10 @@ void refreshScreen()
     // H takes as optional arguments the XY coords of the desired cursor position
     write(STDOUT_FILENO, "\x1b[H", 3);
 
-	drawEditorRows();
+	if (bDrawRows)
+	{
+		drawEditorRows();
+	}
 
 	std::string cursorTerminalPos = "\x1b[" + std::to_string(E.cy+1) + ";" + std::to_string(E.cx + 1) + "H";
 	write(STDOUT_FILENO, &cursorTerminalPos, cursorTerminalPos.size()); 
@@ -101,7 +104,7 @@ void refreshScreen()
 
 void handleError()
 {
-	refreshScreen();
+	refreshScreen(false);
 	std::cerr << "An error occured during execution\n";
 	exit(1);
 }
@@ -212,7 +215,7 @@ void processKey()
 		case CTRL_KEY('y'):
 			std::cout << "Pressed exit combo\n";
 
-			refreshScreen();
+			refreshScreen(false);
 
 			exit(0);
 			break;
@@ -222,6 +225,7 @@ void processKey()
 		case editorKeys::ARROW_RIGHT:
 		case editorKeys::ARROW_LEFT:
 			moveEditorCursor(c);
+			break;
 
 		default:
 			std::cout << c << "\n";
@@ -291,7 +295,7 @@ int main()
 	// Reads 1 byte and writes it in c until it different from q
 	while (true)
 	{
-		refreshScreen();
+		refreshScreen(true);
 		processKey();
 	}
 
