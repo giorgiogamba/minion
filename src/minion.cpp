@@ -41,6 +41,9 @@ enum editorKeys
 	ARROW_RIGHT = 'd',
 	ARROW_UP = 'w',
 	ARROW_DOWN = 's',
+	HOME,
+	END,
+	DEL
 };
 
 #pragma endregion
@@ -116,19 +119,19 @@ void moveEditorCursor(const char input)
 {
 	switch(input)
 	{
-		case editorKeys::ARROW_UP:
+		case editorKeys::ARROW_LEFT:
 			E.cx = std::max(0, E.cx-1);
 			break;
 
-		case editorKeys::ARROW_DOWN:
+		case editorKeys::ARROW_RIGHT:
 			E.cx = std::min(E.cx+1, E.screenCols-1);
 			break;
 
-		case editorKeys::ARROW_LEFT:
+		case editorKeys::ARROW_DOWN:
 			E.cy = std::min(E.cy+1, E.screenRows-1);
             break;
 
-        case editorKeys::ARROW_RIGHT:
+        case editorKeys::ARROW_UP:
 			E.cy = std::max(0, E.cy-1);
             break;
 
@@ -165,40 +168,87 @@ char readKey()
 		}
 	}
 
+	constexpr char escapeSeq = '\x1b';
+
 	// Terminal reads arrows as escape \x1b + A, B, C or D depending on the direction
-	if (charRead == '\x1b') // if read an escape sequence
+	if (charRead == escapeSeq) // if read an escape sequence
 	{
-		constexpr char escape{'\x1b'};
-		char charSequence[3];
-		if (read(STDOUT_FILENO, &charSequence[0], 1) != 1)
+		char charSeq[3];
+
+		if (read(STDOUT_FILENO, &charSeq[0], 1) != 1)
 		{
-			return escape;
+			return escapeSeq;
 		}
 
-		if (read(STDOUT_FILENO, &charSequence[1], 1) != 1)
+		if (read(STDOUT_FILENO, &charSeq[1], 1) != 1)
 		{
-			return escape;
+			return escapeSeq;
 		}
 
-		if (charSequence[0] == '[')
+		if (charSeq[0] == '[')
 		{
-			switch(charSequence[1])
+			if (charSeq[1] >= '0' && charSeq[1] <= '9')
 			{
-				case 'A':
-					return editorKeys::ARROW_UP;
+				if (read(STDERR_FILENO, &charSeq[2], 1) != 1)
+				{
+					return escapeSeq;
+				}
 
-				case 'B':
-					return editorKeys::ARROW_DOWN;
+				// PAGE UP and PAGE DOWN are encoded as <esc>[5~ and <esc>[6~
+				if (charSeq[2] == '~')
+				{
+					switch(charSeq[1])
+					{
+						case '1':
+						case '7':
+							return editorKeys::HOME;
+						
+						case '2':
+						case '8':
+							return editorKeys::END;
 
-				case 'C':
-					return editorKeys::ARROW_RIGHT;
+						case '3':
+							return editorKeys::DEL;
+					}
+				}
+			}
+			else
+			{
+				switch(charSeq[1])
+				{
+					case 'A':
+						return editorKeys::ARROW_UP;
 
-				case 'D':
-					return editorKeys::ARROW_LEFT;
+					case 'B':
+						return editorKeys::ARROW_DOWN;
+
+					case 'C':
+						return editorKeys::ARROW_RIGHT;
+
+					case 'D':
+						return editorKeys::ARROW_LEFT;
+
+					case 'H':
+						return editorKeys::HOME;
+						
+					case 'F':
+						return editorKeys::END;
+				}
+			}
+		}
+		else if (charSeq[1] == 'O')
+		{
+			switch (charSeq[1])
+			{
+				case 'H':
+					return editorKeys::HOME;
+
+				case 'F':
+					return editorKeys::END;
 			}
 		}
 
-		return escape;
+		return escapeSeq;
 	}
 
 	// Standard character
@@ -225,6 +275,14 @@ void processKey()
 		case editorKeys::ARROW_RIGHT:
 		case editorKeys::ARROW_LEFT:
 			moveEditorCursor(c);
+			break;
+
+		case editorKeys::HOME:
+			E.cx = 0;
+			break;
+
+		case editorKeys::END:
+			E.cx = E.screenCols - 1;
 			break;
 
 		default:
